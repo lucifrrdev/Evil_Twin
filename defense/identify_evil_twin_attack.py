@@ -6,11 +6,28 @@ import threading
 import sys
 from tabulate import tabulate
 
-INTERFACE = "wlp4s0f4u1"
+def get_default_wifi_interface():
+    try:
+        if os.path.exists("/proc/net/dev"):
+            with open("/proc/net/dev", "r") as f:
+                lines = f.readlines()
+            for line in lines[2:]:
+                parts = line.split(":")
+                if len(parts) > 0:
+                    iface = parts[0].strip()
+                    # Match typical wireless interfaces (wlan, wl, etc.)
+                    if iface.startswith("wl") or iface.startswith("wlan"):
+                        return iface
+    except Exception:
+        pass
+    return "wlan0" # fallback
+
+INTERFACE = get_default_wifi_interface()
 SCAN_INTERVAL = 10  # seconds
 MONITOR_SCRIPT = "change_interface_mode/set_monitor.sh"
 start_time = time.time()
 stop_flag = False
+
 
 def set_monitor_mode(interface):
     print(f"[*] Enabling monitor mode on interface {interface} using {MONITOR_SCRIPT}...")
