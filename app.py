@@ -124,9 +124,24 @@ def cleanup_all():
 
 # ---------------- API ENDPOINTS ----------------
 
+def interface_exists(iface):
+    # Returns True if interface is found in the system
+    try:
+        with open("/proc/net/dev", "r") as f:
+            devices = f.read()
+        return iface in devices
+    except Exception:
+        # Fallback to ip link
+        try:
+            res = subprocess.run(["ip", "link", "show", iface], capture_output=True, text=True)
+            return res.returncode == 0
+        except Exception:
+            return False
+
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/api/state')
 def get_state():
@@ -142,6 +157,8 @@ def update_interfaces():
 
 @app.route('/api/scan', methods=['POST'])
 def start_scan():
+    if not interface_exists(state["adapter_interface"]):
+        return jsonify({"success": False, "error": f"Monitor interface '{state['adapter_interface']}' not found"})
     if state["is_scanning"]:
         return jsonify({"success": False, "error": "Scan already in progress"})
     
@@ -173,6 +190,8 @@ def get_scan_results():
 
 @app.route('/api/start-ap', methods=['POST'])
 def start_ap():
+    if not interface_exists(state["my_interface"]):
+        return jsonify({"success": False, "error": f"AP interface '{state['my_interface']}' not found"})
     if state["ap_active"]:
         return jsonify({"success": False, "error": "AP is already active"})
     
@@ -206,6 +225,8 @@ def stop_ap():
 
 @app.route('/api/start-portal', methods=['POST'])
 def start_portal():
+    if not interface_exists(state["my_interface"]):
+        return jsonify({"success": False, "error": f"AP interface '{state['my_interface']}' not found"})
     if state["portal_active"]:
         return jsonify({"success": False, "error": "Captive Portal already active"})
 
@@ -226,6 +247,8 @@ deauth_stop_event = threading.Event()
 
 @app.route('/api/start-deauth', methods=['POST'])
 def start_deauth():
+    if not interface_exists(state["adapter_interface"]):
+        return jsonify({"success": False, "error": f"Monitor interface '{state['adapter_interface']}' not found"})
     if state["deauth_active"]:
         return jsonify({"success": False, "error": "Deauthentication attack already running"})
 
@@ -273,6 +296,8 @@ defense_stop_event = threading.Event()
 
 @app.route('/api/start-defense', methods=['POST'])
 def start_defense():
+    if not interface_exists(state["adapter_interface"]):
+        return jsonify({"success": False, "error": f"Monitor interface '{state['adapter_interface']}' not found"})
     if state["defense_active"]:
         return jsonify({"success": False, "error": "Defense mode already active"})
 
@@ -306,6 +331,7 @@ def stop_defense():
     # Restore managed mode
     run_command_log([MANAGED_SCRIPT, state['adapter_interface']])
     return jsonify({"success": True})
+
 
 @app.route('/api/credentials')
 def get_credentials():

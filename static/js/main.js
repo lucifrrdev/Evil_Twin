@@ -146,6 +146,9 @@ async function startWifiScan() {
     } else {
         btn.disabled = false;
         btn.innerText = "🔍 Scan Nearby Networks (15s)";
+        const errMsg = result ? result.error : "Unknown error";
+        logToConsole(`[Error] Scan failed: ${errMsg}`, 'error');
+        alert(`Scan failed: ${errMsg}`);
     }
 }
 
@@ -227,7 +230,11 @@ async function toggleRogueAP() {
             return;
         }
         logToConsole(`[System] Launching Rogue AP with SSID: ${selectedSsid}`, "info");
-        await postData('/api/start-ap', { bssid: selectedBssid, ssid: selectedSsid });
+        const res = await postData('/api/start-ap', { bssid: selectedBssid, ssid: selectedSsid });
+        if (res && !res.success) {
+            logToConsole(`[Error] AP failed to start: ${res.error}`, 'error');
+            alert(`AP failed to start: ${res.error}`);
+        }
     }
     updateState();
 }
@@ -241,7 +248,11 @@ async function togglePortal() {
         await postData('/api/stop-ap'); // full reset shuts both AP and portal down
     } else {
         logToConsole("[System] Launching Captive Portal on Rogue AP interface...", "info");
-        await postData('/api/start-portal');
+        const res = await postData('/api/start-portal');
+        if (res && !res.success) {
+            logToConsole(`[Error] Captive Portal failed to start: ${res.error}`, 'error');
+            alert(`Captive Portal failed to start: ${res.error}`);
+        }
     }
     updateState();
 }
@@ -259,7 +270,11 @@ async function toggleDeauth() {
             return;
         }
         logToConsole(`[System] Launching Deauth jammer on target BSSID: ${selectedBssid}`, "info");
-        await postData('/api/start-deauth', { bssid: selectedBssid, client_mac: selectedClient });
+        const res = await postData('/api/start-deauth', { bssid: selectedBssid, client_mac: selectedClient });
+        if (res && !res.success) {
+            logToConsole(`[Error] Deauth failed to start: ${res.error}`, 'error');
+            alert(`Deauth failed to start: ${res.error}`);
+        }
     }
     updateState();
 }
@@ -273,10 +288,15 @@ async function toggleDefense() {
         await postData('/api/stop-defense');
     } else {
         logToConsole("[System] Activating Defense monitor...", "info");
-        await postData('/api/start-defense');
+        const res = await postData('/api/start-defense');
+        if (res && !res.success) {
+            logToConsole(`[Error] Defense failed to start: ${res.error}`, 'error');
+            alert(`Defense failed to start: ${res.error}`);
+        }
     }
     updateState();
 }
+
 
 async function cleanupSystem() {
     logToConsole("[System] Triggering full system cleanup & reset...", "warning");
