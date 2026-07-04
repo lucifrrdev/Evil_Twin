@@ -27,7 +27,8 @@ def channel_hopper(interface, dwell=0.5, stop_event=None):
                  141, 145, 149, 153, 157, 161, 165, 169, 173, 177]
     }
     """
-    channels = {"2.4GHz": list(range(5, 7))}
+    channels = {"2.4GHz": list(range(1, 15))}
+
 
     def hop():
         while stop_event is None or not stop_event.is_set():
@@ -53,8 +54,9 @@ def scan_wifi_networks(iface, timeout=40):
     subprocess.run(["systemctl", "stop", "wpa_supplicant"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def countdown(seconds, stop_event):
-        """מדפיס כל שניה כמה שניות נותרו לסיום הסריקה"""
+        # Prints remaining seconds left for scanning
         for remaining in range(seconds, 0, -1):
+
             if stop_event.is_set():
                 break
             print(f"\r⏱  Scanning... {remaining:3d}s remaining", end='', flush=True)
