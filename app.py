@@ -68,6 +68,20 @@ def run_command_log(cmd):
         print(f"❌ Command failed: {e}\nStderr: {e.stderr}")
         return False
 
+def interface_exists(iface):
+    # Returns True if interface is found in the system
+    try:
+        with open("/proc/net/dev", "r") as f:
+            devices = f.read()
+        return iface in devices
+    except Exception:
+        # Fallback to ip link
+        try:
+            res = subprocess.run(["ip", "link", "show", iface], capture_output=True, text=True)
+            return res.returncode == 0
+        except Exception:
+            return False
+
 # Cleanup function for interfaces and hostapd
 def cleanup_all():
     print("[*] Performing full system cleanup...")
@@ -122,25 +136,41 @@ def cleanup_all():
     state["is_scanning"] = False
     print("[✓] Cleanup complete.")
 
-# ---------------- API ENDPOINTS ----------------
-
-def interface_exists(iface):
-    # Returns True if interface is found in the system
+def get_active_interfaces():
+    interfaces = []
     try:
-        with open("/proc/net/dev", "r") as f:
-            devices = f.read()
-        return iface in devices
+        # Check /proc/net/dev
+        if os.path.exists("/proc/net/dev"):
+            with open("/proc/net/dev", "r") as f:
+                lines = f.readlines()
+            for line in lines[2:]:
+                parts = line.split(":")
+                if len(parts) > 0:
+                    iface = parts[0].strip()
+                    if iface and iface != "lo":
+                        interfaces.append(iface)
+        else:
+            # Fallback to ip link
+            res = subprocess.run(["ip", "-o", "link", "show"], capture_output=True, text=True)
+            for line in res.stdout.splitlines():
+                parts = line.split(":")
+                if len(parts) > 1:
+                    iface = parts[1].strip()
+                    if iface and iface != "lo":
+                        interfaces.append(iface)
     except Exception:
-        # Fallback to ip link
-        try:
-            res = subprocess.run(["ip", "link", "show", iface], capture_output=True, text=True)
-            return res.returncode == 0
-        except Exception:
-            return False
+        pass
+    # Unique and sorted list
+    return sorted(list(set(interfaces)))
+
+@app.route('/api/interfaces')
+def list_interfaces():
+    return jsonify({"interfaces": get_active_interfaces()})
 
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 
 @app.route('/api/state')

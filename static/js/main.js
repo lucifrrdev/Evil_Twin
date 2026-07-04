@@ -5,11 +5,14 @@ let selectedClient = 'FF:FF:FF:FF:FF:FF';
 
 // State polling & refresh
 let statePollingInterval;
+let activeInterfaces = [];
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Initial fetch of status
-    updateState();
-    statePollingInterval = setInterval(updateState, 3000);
+    // Initial load of interfaces
+    fetchInterfaces().then(() => {
+        updateState();
+        statePollingInterval = setInterval(updateState, 3000);
+    });
 
     // Start Server-Sent Events (SSE) log stream
     connectSseStream();
@@ -18,6 +21,52 @@ document.addEventListener("DOMContentLoaded", () => {
     fetchCredentials();
     setInterval(fetchCredentials, 5000);
 });
+
+// Fetch active interfaces from backend
+async function fetchInterfaces() {
+    try {
+        const res = await fetch('/api/interfaces');
+        const data = await res.json();
+        activeInterfaces = data.interfaces || [];
+        populateInterfaceSelects();
+    } catch (e) {
+        logToConsole(`[Error] Failed to fetch interfaces: ${e.message}`, 'error');
+    }
+}
+
+function populateInterfaceSelects() {
+    const adapterSelect = document.getElementById('adapter_interface');
+    const mySelect = document.getElementById('my_interface');
+    if (!adapterSelect || !mySelect) return;
+
+    // Save current selections
+    const currentAdapter = adapterSelect.value;
+    const currentMy = mySelect.value;
+
+    adapterSelect.innerHTML = '';
+    mySelect.innerHTML = '';
+
+    if (activeInterfaces.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.innerText = 'No Interfaces Found';
+        adapterSelect.appendChild(opt.cloneNode(true));
+        mySelect.appendChild(opt);
+        return;
+    }
+
+    activeInterfaces.forEach(iface => {
+        const opt = document.createElement('option');
+        opt.value = iface;
+        opt.innerText = iface;
+        adapterSelect.appendChild(opt.cloneNode(true));
+        mySelect.appendChild(opt);
+    });
+
+    // Restore or fallback
+    if (activeInterfaces.includes(currentAdapter)) adapterSelect.value = currentAdapter;
+    if (activeInterfaces.includes(currentMy)) mySelect.value = currentMy;
+}
 
 // Tab Switching logic
 function switchTab(tabId) {
@@ -66,14 +115,19 @@ function updateState() {
     fetch('/api/state')
         .then(res => res.json())
         .then(state => {
-            // Update inputs
-            document.getElementById('adapter_interface').value = state.adapter_interface;
-            document.getElementById('my_interface').value = state.my_interface;
+            // Update inputs if they are in options list (don't overwrite user selection changes during typing)
+            if (activeInterfaces.includes(state.adapter_interface)) {
+                document.getElementById('adapter_interface').value = state.adapter_interface;
+            }
+            if (activeInterfaces.includes(state.my_interface)) {
+                document.getElementById('my_interface').value = state.my_interface;
+            }
 
             // Update Target displays
             document.getElementById('sidebar-target-ssid').innerText = state.selected_ssid || "None Selected";
             document.getElementById('sidebar-target-bssid').innerText = state.selected_bssid || "None Selected";
             document.getElementById('sidebar-target-client').innerText = state.selected_client || "Broadcast (FF:FF:FF:FF:FF:FF)";
+
 
             selectedBssid = state.selected_bssid;
             selectedSsid = state.selected_ssid;
