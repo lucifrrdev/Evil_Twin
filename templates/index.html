@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Evil Twin Attack & Defense Toolkit</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <!-- Top Navigation Header -->
+    <header>
+        <h1>🔐 Evil Twin Pentest Hub</h1>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <div id="global-status" class="status-pill status-inactive">
+                <span class="pulse"></span>
+                <span id="status-text">SYSTEM IDLE</span>
+            </div>
+            <button id="btn-cleanup" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;" onclick="cleanupSystem()">
+                🧹 Full Reset
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container Layout -->
+    <div class="wrapper">
+        
+        <!-- Sidebar Options and Interface settings -->
+        <aside class="sidebar">
+            <div class="card">
+                <h2>🛠️ Interfaces Configuration</h2>
+                <div class="form-group">
+                    <label for="adapter_interface">Monitor Adapter</label>
+                    <input type="text" id="adapter_interface" class="form-input" value="wlp4s0f4u1">
+                </div>
+                <div class="form-group">
+                    <label for="my_interface">Master AP Adapter</label>
+                    <input type="text" id="my_interface" class="form-input" value="wlp2s0">
+                </div>
+                <button id="btn-update-interfaces" class="btn btn-secondary" onclick="updateInterfaces()">
+                    Save Interfaces
+                </button>
+            </div>
+
+            <div class="card">
+                <h2>🎯 Active Targets</h2>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.9rem;">
+                    <div>
+                        <span style="color: var(--text-secondary);">Target SSID:</span>
+                        <strong id="sidebar-target-ssid" style="color: var(--accent);">None Selected</strong>
+                    </div>
+                    <div>
+                        <span style="color: var(--text-secondary);">Target BSSID:</span>
+                        <strong id="sidebar-target-bssid" style="color: var(--text-primary); font-family: var(--font-mono);">None Selected</strong>
+                    </div>
+                    <div>
+                        <span style="color: var(--text-secondary);">Target Client:</span>
+                        <strong id="sidebar-target-client" style="color: var(--danger); font-family: var(--font-mono);">Broadcast (FF:FF:FF:FF:FF:FF)</strong>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Dashboard View Panel -->
+        <main class="main-content">
+            
+            <!-- Navigation Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('attack-tab')">🔥 Attack Operations</button>
+                <button class="tab-btn" onclick="switchTab('defense-tab')">🛡️ Real-time Defense</button>
+            </div>
+
+            <!-- Attack Operations Panel -->
+            <section id="attack-tab" class="tab-panel active">
+                <div class="card">
+                    <h2>📡 1. Wi-Fi Scan & Target Selection</h2>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                        Scan for nearby networks to clone or disrupt. Select a row to target the network.
+                    </p>
+                    <div style="display: flex; gap: 1rem;">
+                        <button id="btn-scan" class="btn btn-primary" style="flex: 1;" onclick="startWifiScan()">
+                            🔍 Scan Nearby Networks (15s)
+                        </button>
+                    </div>
+
+                    <div class="table-container">
+                        <table id="networks-table">
+                            <thead>
+                                <tr>
+                                    <th>SSID</th>
+                                    <th>BSSID</th>
+                                    <th>Signal (PWR)</th>
+                                    <th>Channel</th>
+                                    <th>Security</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: var(--text-secondary);">No scan data yet. Click scan to begin.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 1.5rem;">
+                    <h2>🔥 2. Attack Execution Panel</h2>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                        Launch the cloned Rogue AP (hostapd) and DHCP Captive Portal, then kick the target using Deauth.
+                    </p>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                        <!-- Hostapd controls -->
+                        <div>
+                            <h3 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--text-secondary);">Rogue AP (hostapd)</h3>
+                            <button id="btn-toggle-ap" class="btn btn-secondary" onclick="toggleRogueAP()">
+                                🚀 Launch AP
+                            </button>
+                        </div>
+
+                        <!-- Captive Portal controls -->
+                        <div>
+                            <h3 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--text-secondary);">DHCP & Portal</h3>
+                            <button id="btn-toggle-portal" class="btn btn-secondary" onclick="togglePortal()">
+                                🌐 Start Captive Portal
+                            </button>
+                        </div>
+
+                        <!-- Deauth controls -->
+                        <div>
+                            <h3 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--text-secondary);">Deauth Jammer</h3>
+                            <button id="btn-toggle-deauth" class="btn btn-danger" onclick="toggleDeauth()">
+                                🎯 Start Deauth
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 1.5rem;">
+                    <h2>🔑 Captured Credentials Vault</h2>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                        Real-time captured usernames & passwords from the fake login portal.
+                    </p>
+                    <div id="credentials-list" class="credentials-grid">
+                        <div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 2rem 0;">
+                            No credentials captured yet. Waiting for client log-ins...
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Defense Panel -->
+            <section id="defense-tab" class="tab-panel">
+                <div class="card">
+                    <h2>🛡️ Real-time Evil Twin IDS / IPS</h2>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                        Monitors Wi-Fi signal behaviors, beacons, and probe responses to detect cloned access points and anomalies.
+                    </p>
+                    <button id="btn-toggle-defense" class="btn btn-success" style="max-width: 300px;" onclick="toggleDefense()">
+                        🛡️ Activate Defense Monitor
+                    </button>
+                </div>
+            </section>
+
+            <!-- Scrolling Console Log Viewer -->
+            <div class="console-container">
+                <div class="console-header">
+                    <div class="console-title">🖥️ Operations Log Console</div>
+                    <button id="btn-clear-console" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.75rem;" onclick="clearConsole()">
+                        Clear
+                    </button>
+                </div>
+                <div id="console-body" class="console-body">
+                    <div class="log-entry info">[System] Web interface connected. Logs will appear here in real-time.</div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- JS Logic Scripts -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
