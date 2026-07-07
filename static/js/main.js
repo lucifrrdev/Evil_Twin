@@ -9,7 +9,22 @@ let activeInterfaces = [];
 
 document.addEventListener("DOMContentLoaded", () => {
     // Initial load of interfaces
-    fetchInterfaces().then(() => {
+    fetchInterfaces().then(async () => {
+        // Send localStorage configurations to backend if they exist
+        const storedAdapter = localStorage.getItem('adapter_interface');
+        const storedMy = localStorage.getItem('my_interface');
+        if (storedAdapter || storedMy) {
+            const updatePayload = {};
+            if (storedAdapter && activeInterfaces.includes(storedAdapter)) {
+                updatePayload.adapter_interface = storedAdapter;
+            }
+            if (storedMy && activeInterfaces.includes(storedMy)) {
+                updatePayload.my_interface = storedMy;
+            }
+            if (Object.keys(updatePayload).length > 0) {
+                await postData('/api/update-interfaces', updatePayload);
+            }
+        }
         updateState();
         statePollingInterval = setInterval(updateState, 3000);
     });
@@ -63,9 +78,21 @@ function populateInterfaceSelects() {
         mySelect.appendChild(opt);
     });
 
-    // Restore or fallback
-    if (activeInterfaces.includes(currentAdapter)) adapterSelect.value = currentAdapter;
-    if (activeInterfaces.includes(currentMy)) mySelect.value = currentMy;
+    // Restore from localStorage or current fallback
+    const storedAdapter = localStorage.getItem('adapter_interface');
+    const storedMy = localStorage.getItem('my_interface');
+
+    if (storedAdapter && activeInterfaces.includes(storedAdapter)) {
+        adapterSelect.value = storedAdapter;
+    } else if (activeInterfaces.includes(currentAdapter)) {
+        adapterSelect.value = currentAdapter;
+    }
+
+    if (storedMy && activeInterfaces.includes(storedMy)) {
+        mySelect.value = storedMy;
+    } else if (activeInterfaces.includes(currentMy)) {
+        mySelect.value = currentMy;
+    }
 }
 
 // Tab Switching logic
@@ -101,12 +128,17 @@ async function postData(url, data = {}) {
 async function updateInterfaces() {
     const adapter = document.getElementById('adapter_interface').value;
     const myIface = document.getElementById('my_interface').value;
+
+    // Save selected values to local storage
+    localStorage.setItem('adapter_interface', adapter);
+    localStorage.setItem('my_interface', myIface);
+
     const result = await postData('/api/update-interfaces', {
         adapter_interface: adapter,
         my_interface: myIface
     });
     if (result && result.success) {
-        logToConsole(`[System] Interfaces config saved.`, 'info');
+        logToConsole(`[System] Interfaces config saved to system and LocalStorage.`, 'info');
     }
 }
 
