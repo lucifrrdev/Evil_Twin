@@ -63,7 +63,7 @@ def check_root():
 
 def assign_ip_to_ap(interface):
     print(f"[*] Assigning {SERVER_IP}/24 to {interface}...")
-    subprocess.run(["ip", "addr", "flush", "dev", interface])
+    # Remove flush to avoid dropping existing interface configurations and SSH sessions
     subprocess.run(["ip", "addr", "add", f"{SERVER_IP}/24", "dev", interface], check=True)
     subprocess.run(["ip", "link", "set", interface, "up"], check=True)
 
