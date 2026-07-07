@@ -139,6 +139,21 @@ def cleanup_all():
     state["is_scanning"] = False
     print("[✓] Cleanup complete.")
 
+import socket
+import fcntl
+import struct
+
+def get_interface_ip(ifname):
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        return socket.inet_ntoa(fcntl.ioctl(
+            s.fileno(),
+            0x8915,  # SIOCGIFADDR
+            struct.pack('256s', ifname[:15].encode('utf-8'))
+        )[20:24])
+    except Exception:
+        return None
+
 def get_active_interfaces():
     interfaces = []
     try:
@@ -163,8 +178,13 @@ def get_active_interfaces():
                         interfaces.append(iface)
     except Exception:
         pass
-    # Unique and sorted list
-    return sorted(list(set(interfaces)))
+    
+    # Generate list with IP mappings
+    result = []
+    for iface in sorted(list(set(interfaces))):
+        ip = get_interface_ip(iface)
+        result.append({"name": iface, "ip": ip or "No IP"})
+    return result
 
 @app.route('/api/interfaces')
 def list_interfaces():

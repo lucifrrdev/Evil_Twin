@@ -72,25 +72,28 @@ function populateInterfaceSelects() {
 
     activeInterfaces.forEach(iface => {
         const opt = document.createElement('option');
-        opt.value = iface;
-        opt.innerText = iface;
+        opt.value = iface.name;
+        opt.innerText = `${iface.name} (${iface.ip})`;
         adapterSelect.appendChild(opt.cloneNode(true));
         mySelect.appendChild(opt);
     });
+
+    // Extract list of names for existence check
+    const interfaceNames = activeInterfaces.map(i => i.name);
 
     // Restore from localStorage or current fallback
     const storedAdapter = localStorage.getItem('adapter_interface');
     const storedMy = localStorage.getItem('my_interface');
 
-    if (storedAdapter && activeInterfaces.includes(storedAdapter)) {
+    if (storedAdapter && interfaceNames.includes(storedAdapter)) {
         adapterSelect.value = storedAdapter;
-    } else if (activeInterfaces.includes(currentAdapter)) {
+    } else if (interfaceNames.includes(currentAdapter)) {
         adapterSelect.value = currentAdapter;
     }
 
-    if (storedMy && activeInterfaces.includes(storedMy)) {
+    if (storedMy && interfaceNames.includes(storedMy)) {
         mySelect.value = storedMy;
-    } else if (activeInterfaces.includes(currentMy)) {
+    } else if (interfaceNames.includes(currentMy)) {
         mySelect.value = currentMy;
     }
 }
@@ -147,11 +150,12 @@ function updateState() {
     fetch('/api/state')
         .then(res => res.json())
         .then(state => {
-            // Update inputs if they are in options list (don't overwrite user selection changes during typing)
-            if (activeInterfaces.includes(state.adapter_interface)) {
+            // Update inputs if they are in options list
+            const interfaceNames = activeInterfaces.map(i => i.name);
+            if (interfaceNames.includes(state.adapter_interface)) {
                 document.getElementById('adapter_interface').value = state.adapter_interface;
             }
-            if (activeInterfaces.includes(state.my_interface)) {
+            if (interfaceNames.includes(state.my_interface)) {
                 document.getElementById('my_interface').value = state.my_interface;
             }
 
