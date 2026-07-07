@@ -8,8 +8,8 @@ from urllib.parse import parse_qs
 from datetime import datetime
 
 # הגדרות IP ו־DHCP
-OFFERED_IP = "192.168.1.100"
-SERVER_IP = "192.168.1.1"
+OFFERED_IP = "10.10.10.100"
+SERVER_IP = "10.10.10.1"
 SUBNET_MASK = "255.255.255.0"
 LEASE_TIME = 3600
 LOG_FILE = "logins.txt"
