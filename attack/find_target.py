@@ -304,7 +304,7 @@ def scan_wifi_networks_non_interactive(iface, timeout=15):
 
     print("[*] Starting channel hopping...")
     stop_event = threading.Event()
-    hopper_thread = channel_hopper(iface, dwell=1, stop_event=stop_event)
+    hopper_thread = channel_hopper(iface, dwell=0.3, stop_event=stop_event)
 
     print(f"[*] Scanning Wi-Fi networks for {timeout}s...")
     try:

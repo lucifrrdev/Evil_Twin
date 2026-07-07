@@ -275,7 +275,11 @@ function renderNetworksTable(aps) {
         else if (ap.PWR > -80) signalClass = 'signal-badge signal-medium';
 
         tr.innerHTML = `
-            <td><strong>${ap.SSID || '&lt;Hidden&gt;'}</strong></td>
+            <td>
+                <strong>${ap.SSID || '&lt;Hidden&gt;'}</strong>
+                <br>
+                <small style="color: var(--text-secondary); font-family: var(--font-mono); font-size: 0.8rem;">${bssid}</small>
+            </td>
             <td style="font-family: var(--font-mono);">${bssid}</td>
             <td><span class="${signalClass}">${ap.PWR} dBm</span></td>
             <td>${ap.CH}</td>
