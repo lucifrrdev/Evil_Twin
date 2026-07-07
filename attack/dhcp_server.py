@@ -83,8 +83,12 @@ def redirect_http_to_local(interface):
                     "--to-destination", f"{SERVER_IP}:80"], check=True)
 
 def block_unauthenticated(interface):
-    print("[*] Blocking all traffic by default on interface:", interface)
-    subprocess.run(["iptables", "-I", "FORWARD", "-i", interface, "-j", "REJECT"], check=True)
+    print("[*] Blocking traffic by default, but keeping SSH (Port 22) open on:", interface)
+    # Allow port 22 (SSH) traffic first
+    subprocess.run(["iptables", "-I", "FORWARD", "-i", interface, "-p", "tcp", "--dport", "22", "-j", "ACCEPT"], check=True)
+    subprocess.run(["iptables", "-I", "FORWARD", "-i", interface, "-p", "tcp", "--sport", "22", "-j", "ACCEPT"], check=True)
+    # Reject everything else
+    subprocess.run(["iptables", "-A", "FORWARD", "-i", interface, "-j", "REJECT"], check=True)
 
 class CaptivePortalHandler(BaseHTTPRequestHandler):
     def do_GET(self):
