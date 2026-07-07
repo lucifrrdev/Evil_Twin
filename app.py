@@ -122,13 +122,16 @@ def cleanup_all():
     except Exception:
         pass
 
-    # Restore NetworkManager/wpa_supplicant
-    subprocess.run(["systemctl", "start", "NetworkManager"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    subprocess.run(["systemctl", "start", "wpa_supplicant"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # Safely clear iptables rules added by the captive portal
+    print("[*] Clearing iptables firewall rules...")
+    subprocess.run(["iptables", "-F"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run(["iptables", "-t", "nat", "-F"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-    # Set interfaces to managed mode
-    run_command_log([MANAGED_SCRIPT, state["my_interface"]])
-    run_command_log([MANAGED_SCRIPT, state["adapter_interface"]])
+    # Re-enable managed mode on attack interface safely
+    if state["my_interface"]:
+        run_command_log([MANAGED_SCRIPT, state["my_interface"]])
+    if state["adapter_interface"]:
+        run_command_log([MANAGED_SCRIPT, state["adapter_interface"]])
     
     state["ap_active"] = False
     state["portal_active"] = False

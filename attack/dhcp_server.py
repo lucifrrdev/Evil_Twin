@@ -186,6 +186,22 @@ def send_response(mac, xid, chaddr, msg_type="offer"):
     sendp(packet, iface=INTERFACE, verbose=0)
     print(f"[>] Sent DHCP {msg_type.upper()} to {mac}")
 
+def handle_dns(pkt):
+    if pkt.haslayer(DNS) and pkt[DNS].opcode == 0 and pkt[DNS].ancount == 0:
+        # Get requested domain
+        qname = pkt[DNSQR].qname.decode()
+        # Forge DNS response pointing to our local server
+        dns_resp = IP(dst=pkt[IP].src, src=pkt[IP].dst) / \
+                   UDP(dport=pkt[UDP].sport, sport=53) / \
+                   DNS(id=pkt[DNS].id, qr=1, aa=1, qd=pkt[DNS].qd,
+                       an=DNSRR(rrname=pkt[DNSQR].qname, type='A', rclass='IN', ttl=60, rdata=SERVER_IP))
+        sendp(Ether(dst=pkt[Ether].src, src=get_if_hwaddr(INTERFACE))/dns_resp, iface=INTERFACE, verbose=0)
+        print(f"[✓] Spoofed DNS query for '{qname}' to local portal")
+
+def start_dns_server(interface):
+    print(f"[*] Starting local DNS Spoofer on {interface}...")
+    sniff(filter="udp and port 53", iface=interface, prn=handle_dns, store=0)
+
 def start_captive_portal(interface):
     global INTERFACE
     INTERFACE = interface
@@ -196,6 +212,10 @@ def start_captive_portal(interface):
     block_unauthenticated(interface)
     redirect_http_to_local(interface)
     start_http_server()
+    
+    # Start the DNS Spoofer in a separate background thread
+    threading.Thread(target=start_dns_server, args=(interface,), daemon=True).start()
+    
     print(f"[*] Listening for DHCP on {interface}...")
     sniff(filter="udp and (port 67 or 68)", iface=interface, prn=handle_dhcp, store=0)
 
