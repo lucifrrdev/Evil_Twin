@@ -21,7 +21,7 @@ def kill_python_on_port_80():
     try:
         # Step 1: Run `sudo lsof -i :80`
         result = subprocess.run(
-            ['sudo', 'lsof', '-i', ':80'],
+            ['lsof', '-i', ':80'],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
@@ -193,7 +193,7 @@ def start_captive_portal(interface):
     redirect_http_to_local(interface)
     start_http_server()
     print(f"[*] Listening for DHCP on {interface}...")
-    sniff(filter="udp and (port 67 or 68)", iface=interface, prn=handle_dhcp)
+    sniff(filter="udp and (port 67 or 68)", iface=interface, prn=handle_dhcp, store=0)
 
 if __name__ == "__main__":
     import sys

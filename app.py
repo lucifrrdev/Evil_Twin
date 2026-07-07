@@ -266,6 +266,8 @@ def start_portal():
     def portal_thread():
         try:
             state["portal_active"] = True
+            print("⏳ Waiting for interface to stabilize...")
+            time.sleep(1.5)
             print("🚀 Launching Captive Portal & DHCP server...")
             start_captive_portal(state['my_interface'])
         except Exception as e:
