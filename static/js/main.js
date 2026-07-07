@@ -238,10 +238,13 @@ async function startWifiScan() {
     }
 }
 
+let globalScanResults = {};
+
 async function fetchScanResults() {
     try {
         const response = await fetch('/api/scan-results');
         const data = await response.json();
+        globalScanResults = data;
         renderNetworksTable(data.access_points);
     } catch (e) {
         logToConsole(`[Error] Failed to fetch scan results: ${e.message}`, 'error');
@@ -289,11 +292,59 @@ function renderNetworksTable(aps) {
     });
 }
 
+function renderClientsTable(bssid) {
+    const tbody = document.querySelector('#clients-table tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const clientsList = globalScanResults.clients ? globalScanResults.clients[bssid] || [] : [];
+    
+    if (clientsList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">No clients detected for this network yet.</td></tr>';
+        return;
+    }
+
+    clientsList.forEach(client => {
+        const tr = document.createElement('tr');
+        const isClientSelected = (client.MAC === selectedClient);
+        if (isClientSelected) {
+            tr.classList.add('selected');
+        }
+
+        tr.innerHTML = `
+            <td style="font-family: var(--font-mono);">${client.MAC}</td>
+            <td>${client.Vendor || 'Unknown'}</td>
+            <td>${client.RSSI ? client.RSSI + ' dBm' : 'N/A'}</td>
+            <td style="color: var(--accent); font-weight: bold;">${client.IP || 'Scanning IP...'}</td>
+            <td>
+                <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="selectClientTarget('${client.MAC}')">
+                    Target Client
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function selectClientTarget(clientMac) {
+    selectedClient = clientMac;
+    logToConsole(`[Client Target Selected] MAC: ${clientMac}`, 'info');
+    postData('/api/update-interfaces', {
+        selected_client: clientMac
+    }).then(() => {
+        updateState();
+        renderClientsTable(selectedBssid);
+    });
+}
+
 async function selectTargetNetwork(bssid, ssid) {
     selectedBssid = bssid;
     selectedSsid = ssid;
     logToConsole(`[Target Selected] SSID: ${ssid} | BSSID: ${bssid}`, 'info');
     
+    // Render clients table for this network
+    renderClientsTable(bssid);
+
     // Save selections to backend state
     await postData('/api/update-interfaces', {
         selected_bssid: bssid,

@@ -106,6 +106,29 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <h3 style="margin-top: 1.5rem; margin-bottom: 0.5rem; color: var(--text-primary);">📡 Connected Clients</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                        Clients connected to the selected network (IP addresses are detected via ARP packets).
+                    </p>
+                    <div class="table-container">
+                        <table id="clients-table">
+                            <thead>
+                                <tr>
+                                    <th>MAC Address</th>
+                                    <th>Vendor</th>
+                                    <th>Signal (RSSI)</th>
+                                    <th>Detected IP</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: var(--text-secondary);">Select a network above to view active clients.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div class="card" style="margin-top: 1.5rem;">
