@@ -8,9 +8,8 @@ enable_monitor_mode() {
         exit 1
     fi
 
-    echo "[*] Stopping interfering network services..."
-    systemctl stop NetworkManager
-    systemctl stop wpa_supplicant
+    echo "[*] Setting NetworkManager to unmanage $INTERFACE..."
+    nmcli device set "$INTERFACE" managed no 2>/dev/null || true
 
     echo "[*] Bringing down interface $INTERFACE..."
     ip link set "$INTERFACE" down
@@ -20,10 +19,6 @@ enable_monitor_mode() {
 
     echo "[*] Bringing up interface $INTERFACE..."
     ip link set "$INTERFACE" up
-
-    echo "[*] Bringing up interfering network services..."
-    systemctl start NetworkManager
-    systemctl start wpa_supplicant
 
     echo "[*] Current interface status:"
     iwconfig "$INTERFACE"

@@ -49,9 +49,7 @@ def scan_wifi_networks(iface, timeout=40):
     clients = defaultdict(dict)
     parser = manuf.MacParser()
 
-    print("[*] Stopping NetworkManager and wpa_supplicant (if running)...")
-    subprocess.run(["systemctl", "stop", "NetworkManager"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    subprocess.run(["systemctl", "stop", "wpa_supplicant"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # NetworkManager configuration is handled at the script layer (nmcli) to avoid dropping SSH connection
 
     def countdown(seconds, stop_event):
         # Prints remaining seconds left for scanning
@@ -226,9 +224,7 @@ def scan_wifi_networks_non_interactive(iface, timeout=15):
     clients = defaultdict(dict)
     parser = manuf.MacParser()
 
-    print("[*] Stopping NetworkManager and wpa_supplicant (if running)...")
-    subprocess.run(["systemctl", "stop", "NetworkManager"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    subprocess.run(["systemctl", "stop", "wpa_supplicant"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # NetworkManager configuration is handled at the script layer (nmcli) to avoid dropping SSH connection
 
     def packet_handler(pkt):
         if pkt.haslayer(Dot11):
