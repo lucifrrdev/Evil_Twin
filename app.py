@@ -182,7 +182,10 @@ def update_interfaces():
     data = request.json
     state["adapter_interface"] = data.get("adapter_interface", state["adapter_interface"])
     state["my_interface"] = data.get("my_interface", state["my_interface"])
-    print(f"[✓] Interfaces updated. Monitor Adapter: {state['adapter_interface']}, Master Adapter: {state['my_interface']}")
+    state["selected_bssid"] = data.get("selected_bssid", state["selected_bssid"])
+    state["selected_ssid"] = data.get("selected_ssid", state["selected_ssid"])
+    state["selected_client"] = data.get("selected_client", state["selected_client"])
+    print(f"[✓] Interfaces & Targets updated. Monitor: {state['adapter_interface']}, Master: {state['my_interface']}, Target SSID: {state['selected_ssid']}")
     return jsonify({"success": True})
 
 @app.route('/api/scan', methods=['POST'])
