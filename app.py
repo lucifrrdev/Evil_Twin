@@ -433,9 +433,9 @@ if __name__ == '__main__':
     # Print intro
     print("==================================================")
     print("🔐 Evil Twin Attack & Defense Toolkit - Web Dashboard")
-    print("URL: http://localhost:5001")
+    print("URL: http://localhost:5002")
     print("Note: Must be run with sudo for interface control!")
     print("==================================================")
     
-    app.run(host='0.0.0.0', port=5001, debug=False)
+    app.run(host='0.0.0.0', port=5002, debug=False)
 
